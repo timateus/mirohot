@@ -70,7 +70,7 @@ for i = 1:t
     %% More advanced image processing
     % find connected components and analyze them
     CC = bwconncomp(snap); 
-    STATS = regionprops(CC, 'centroid', 'Area', 'BoundingBox'); 
+    STATS = regionprops(CC, 'centroid', 'Area', 'BoundingBox', 'Orientation'); 
 
     %find and get rid of conected components smaller than paremeter area
     areas = cat(1, STATS.Area);
@@ -89,7 +89,7 @@ for i = 1:t
     boxes;
     
     %% Calculate Hu moments of each blob
-    if CC.NumObjects > 0 %if we have more than 0 objects
+    if CC.NumObjects == 1 %if we have one object
         img = zeros(CC.ImageSize); %create an empty matrix
         img(CC.PixelIdxList{1,1}) = 1; % fill it with one blob
         humoment1 = humoments(img); % calculate moments of the image
@@ -102,7 +102,7 @@ for i = 1:t
         end       
     end
     
-    if CC.NumObjects > 1     
+    if CC.NumObjects == 2 %if we have two objects     
         img = zeros(CC.ImageSize); %create an empty matrix
         img(CC.PixelIdxList{1,2}) = 1; % fill it with one blob
         humoment1 = humoments(img); % calculate moments of the image
@@ -166,4 +166,8 @@ plot(path2(:,1), -path2(:,2))
 title('path2')
 axis([0 640 -480 0])
 
+% this function for mapping 
+% fitgeotrans
 
+% this to display arrow
+% http://stackoverflow.com/questions/1803043/how-do-i-display-an-arrow-positioned-at-a-specific-angle-in-matlab
