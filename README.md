@@ -1,4 +1,7 @@
 mirohot
 =======
 
-experimental robotics lab code
+Experimental robotics lab code
+
+
+Code for the computer vision system. 
