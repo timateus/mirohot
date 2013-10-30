@@ -17,6 +17,7 @@
 
 
 %% set up video aquisition
+fprintf('initializing video...\n')
 if ~exist('vid', 'var')  %check if the videoinput has been created
     vid = videoinput('winvideo', 1); %creates a videoinput, a webcam must be connected
     vid.ReturnedColorspace = 'grayscale'; %get a greyscale image
@@ -26,6 +27,7 @@ if ~exist('vid', 'var')  %check if the videoinput has been created
     % preview(vid);
 end
 resolution = vid.VideoREsolution;
+fprintf('Initializing done.\n')
 
 %% Constants
 
