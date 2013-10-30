@@ -1,5 +1,11 @@
-%test file for figuring out how to map image input to desired coordinate
-%system
+% illustration of how to map image input to desired coordinate system
+%
+%
+%
+% Timofey Nosov
+% October 29th, 2013
+
+tic
 bwthreshold = 0.95;
 snap = imread('snap2');  
 snaporiginal = snap;
@@ -13,6 +19,7 @@ STATS = regionprops(CC, 'centroid', 'Area');
 
 %find and get rid of conected components smaller than paremeter area
 areas = cat(1, STATS.Area);
+allareas = areas;
 ind = find(areas < 50); %indeces of connected components less than desired area
 CC.PixelIdxList(ind) = []; %delete conected components with indeces with area less then specified
 CC.NumObjects = CC.NumObjects - length(ind);
@@ -23,8 +30,8 @@ centroids = cat(1, STATS.Centroid);
 areas = cat(1, STATS.Area);
 areas;
 centroids;
-%%
-%calculate the data to crop
+
+%% crop img 
 topleftcorner = min(centroids);
 bottomright = max(centroids);
 cropsize = bottomright - topleftcorner;
@@ -34,7 +41,7 @@ imsize = size(cropped);
 % imshow(cropped)
 % title('cropped')
 
-%new centroids
+%% recalculate centroids
 newcentroids(:,1) = centroids(:,1) - topleftcorner(1,1);
 newcentroids(:,2) = centroids(:,2) - topleftcorner(1,2);
 %sort centroids in the order: top left, botoom left, top right, bottom
@@ -44,30 +51,27 @@ sumxy = sum(newcentroids,2); %sum of x and y coordinates of each point
 sortedcentroids = newcentroids(indeces,:);
 
 
-%%
-%calculate transform
+%% calculate transform
 distortedpts = [sortedcentroids];
-original = [1 1; 1 imsize(1); imsize(2) 1; imsize(2) imsize(1)];
-tform  = estimateGeometricTransform(distortedpts, original, 'similarity');
+original = [1 1; 1 imsize(1); imsize(2) 1; imsize(2) imsize(1)]; % here should be coordinates of ideal non-distorted table
+% tform  = estimateGeometricTransform(distortedpts, original, 'similarity');
 tform2 = cp2tform(distortedpts, original, 'projective');
 
 
-B = imwarp(cropped,tform);
-[xm,ym] = tformfwd(tform2, [distortedpts(:,1); 100], [distortedpts(:,2); 100]);
+% B = imwarp(cropped,tform);
+[xm,ym] = tformfwd(tform2, [distortedpts(:,1)], [distortedpts(:,2)]);
 
 
-
+toc
 %% output
 figure(1)
 subplot(2,2,1)
-imshow(cropped)
-title('original');
-axis image
-subplot(2,2,2)
-imshow(B)
-title('restored');
-axis image
+imshow(snaporiginal)
+title('original snapshot')
 
+subplot(2,2,2)
+imshow(snap)
+title('corner detection')
 
 subplot(2,2,3)
 plot(distortedpts(:,1), distortedpts(:,2), 'or')
@@ -75,10 +79,5 @@ title('original');
 axis image
 subplot(2,2,4)
 plot(xm,ym, 'or')
-title('restored');
+title('corrected');
 axis image
-
-
-
-
-% visiongeotforms

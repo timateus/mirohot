@@ -33,7 +33,7 @@ fprintf('Initializing done.\n')
 
 bwthreshold = 0.95;
 area = 300; % minimal area of an object in px
-t = 1000; % length of the experiment
+t = 500; % length of the experiment
 looptime = zeros(t, 1);
 path = zeros(t, 2);
 path2 = zeros(t, 2);
@@ -91,31 +91,61 @@ for i = 1:t
     boxes;
     
     %% Calculate Hu moments of each blob
-    if CC.NumObjects == 1 %if we have one object
-        img = zeros(CC.ImageSize); %create an empty matrix
-        img(CC.PixelIdxList{1,1}) = 1; % fill it with one blob
-        humoment1 = humoments(img); % calculate moments of the image
-        current_moments = [humoment1; shapes_moments];
-        distance = pdist(current_moments, 'correlation'); %distance between shapes vectors and current vector 
-        if distance(1, 1) < distance (1,2) 
-            fprintf('I see a carrot!\n')
-        else 
-            fprintf('I see a circle!\n')
-        end       
-    end
     
-    if CC.NumObjects == 2 %if we have two objects     
+    for k = 1:CC.NumObjects
+        
         img = zeros(CC.ImageSize); %create an empty matrix
-        img(CC.PixelIdxList{1,2}) = 1; % fill it with one blob
+        img(CC.PixelIdxList{1,k}) = 1; % fill it with one blob
         humoment1 = humoments(img); % calculate moments of the image
         current_moments = [humoment1; shapes_moments];
         distance = pdist(current_moments, 'correlation'); %distance between shapes vectors and current vector 
-        if distance(1, 1) < distance (1,2) 
-            fprintf('...and a carrot!\n')
-        else 
-            fprintf('...and a circle!\n')
+        if distance(1, 1) < (2.4022e-05) * 2
+            fprintf('I see a carrot! \n')
+        end
+        
+        if distance(1, 2) < (4.6460e-05) * 2
+            fprintf('I see tape!\n ')
+%         else
+%             fprintf('i dont see any carrots or tape!')
         end   
-    end
+
+        
+    end        
+%     fprintf('\n') 
+    carrotdist(i) = distance(1, 1);
+    tapedist(i) = distance(1, 2);
+    
+%     if CC.NumObjects == 1 %if we have one object
+%         img = zeros(CC.ImageSize); %create an empty matrix
+%         img(CC.PixelIdxList{1,1}) = 1; % fill it with one blob
+%         humoment1 = humoments(img); % calculate moments of the image
+%         current_moments = [humoment1; shapes_moments];
+%         distance = pdist(current_moments, 'correlation'); %distance between shapes vectors and current vector 
+%         if distance(1, 1) < distance (1,2) 
+%             fprintf('I see a carrot!\n')
+%         else 
+%             fprintf('I see a circle!\n')
+%         end       
+%     end
+%     
+%     if CC.NumObjects == 2 %if we have two objects     
+%         img = zeros(CC.ImageSize); %create an empty matrix
+%         img(CC.PixelIdxList{1,2}) = 1; % fill it with one blob
+%         humoment1 = humoments(img); % calculate moments of the image
+%         current_moments = [humoment1; shapes_moments];
+%         distance = pdist(current_moments, 'correlation'); %distance between shapes vectors and current vector 
+%         if distance(1, 1) < distance (1,2) 
+%             fprintf('...and a carrot!\n')
+%         else 
+%             fprintf('...and a circle!\n')
+%         end   
+%     end
+    
+    
+    
+    
+    
+    
     
     %% calculating and real time ploting of the path
     if size(centroids,1)>0
@@ -167,6 +197,22 @@ figure
 plot(path2(:,1), -path2(:,2))
 title('path2')
 axis([0 640 -480 0])
+
+
+%here we try to plot distances. Try 1/distance. Need to recalculate
+%predefined objects' moments
+figure
+plot( 1:i, (2.4022e-05) * 2, 'r-')
+plot(carrotdist, 'r')
+hold on
+plot(tapedist, 'b')
+plot( 1:i, (4.6460e-05) * 2, 'm-')
+
+
+
+
+
+
 
 % this function for mapping 
 % fitgeotrans
