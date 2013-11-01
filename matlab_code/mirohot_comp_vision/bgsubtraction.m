@@ -1,6 +1,6 @@
 %This is an image processing algorithm for the MIROHOT project. 
 %Algotith detects robots 
-%For the setup a webcamera is needed, the field should be eliminated with
+%For the setup a webcamera is needed, the field should be illuminated with
 %white light and reflective shapes should be placed at the top of each
 %robot.
 %
@@ -33,7 +33,7 @@ fprintf('Initializing done.\n')
 
 bwthreshold = 0.95;
 area = 300; % minimal area of an object in px
-t = 500; % length of the experiment
+t = 150; % length of the experiment
 looptime = zeros(t, 1);
 path = zeros(t, 2);
 path2 = zeros(t, 2);
@@ -60,9 +60,9 @@ for i = 1:t
     snaporiginal = snap;
     snap = im2bw(snap, bwthreshold); % convert to binary with specified threshold
     
-    %create a gaussian filter and smooth an image 
-    gaussFilter = fspecial('gaussian',[3 3], 0.5);
-    snap = imfilter(snap, gaussFilter);
+%     %create a gaussian filter and smooth an image 
+%     gaussFilter = fspecial('gaussian',[3 3], 0.5);
+%     snap = imfilter(snap, gaussFilter);
     
 %     %plot bw picture
 %     subplot(2,2,2)
@@ -72,7 +72,7 @@ for i = 1:t
     %% More advanced image processing
     % find connected components and analyze them
     CC = bwconncomp(snap); 
-    STATS = regionprops(CC, 'centroid', 'Area', 'BoundingBox', 'Orientation'); 
+    STATS = regionprops(CC, 'centroid', 'Area', 'Orientation'); 
 
     %find and get rid of conected components smaller than paremeter area
     areas = cat(1, STATS.Area);
@@ -84,11 +84,10 @@ for i = 1:t
     % rearrange data
     centroids = cat(1, STATS.Centroid);
     areas = cat(1, STATS.Area);
-    boxes = round(cat(1, STATS.BoundingBox));
 
     areas;
     centroids;
-    boxes;
+
     
     %% Calculate Hu moments of each blob
     
@@ -108,12 +107,15 @@ for i = 1:t
 %         else
 %             fprintf('i dont see any carrots or tape!')
         end   
+        
+
+        carrotdist(i) = distance(1, 1);
+        tapedist(i) = distance(1, 2);
 
         
     end        
-%     fprintf('\n') 
-    carrotdist(i) = distance(1, 1);
-    tapedist(i) = distance(1, 2);
+ 
+
     
 %     if CC.NumObjects == 1 %if we have one object
 %         img = zeros(CC.ImageSize); %create an empty matrix
@@ -164,12 +166,7 @@ for i = 1:t
         title('path2')
         axis([0 640 -480 0])
     end   
-    
-    %% Moments of the components
-    %Calculate moments of the picture. Humoments function is in a separate
-    %file
-    current_moments = humoments(snap);
-    current_moments = [current_moments; shapes_moments];
+
     
     %%
     %a guestimate for mini-wec competition. Completely irrelevant
@@ -186,7 +183,7 @@ figure
 plot(looptime)
 title('looptime')
 hold on
-averagetime = mean(looptime)
+averagetime = mean(looptime);
 
 figure 
 plot(path(:,1), -path(:,2))
