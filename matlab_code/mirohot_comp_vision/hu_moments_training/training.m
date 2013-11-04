@@ -1,6 +1,6 @@
 bwthreshold = 0.95;
 area = 40; % minimal area of an object in px
-t = 400; % length of the experiment
+t = 1000; % length of the experiment
 
 %% set up video aquisition
 fprintf('initializing video...\n')
@@ -16,19 +16,32 @@ resolution = vid.VideoREsolution;
 fprintf('Initializing done.\n')
 
 % preview(vid);
+%%
 
 % either load precalculater moments or use this program to calculate them 
+load('ballmoments.mat')
+load('carrotmoments.mat')
+load('tapemoments.mat')
+
+centreball = mean(ballmoments);
+centrecarrot = mean(carrotmoments);
+centretape = mean(tapemoments);
+centres = [centreball; centrecarrot; centretape];
+
+
+% plot clouds of moments
 figure(2)
 scatter3(carrotmoments(:,1), carrotmoments(:,2), carrotmoments(:,3), 'r')
 hold on
 scatter3(tapemoments(:,1), tapemoments(:,2), tapemoments(:,3), 'b')
 scatter3(ballmoments(:,1), ballmoments(:,2), ballmoments(:,3), 'm')
 
-% xlabel('first moment')
-% ylabel('second moment')
-% zlabel('third moment')
-% title('first three moments of shapes')
-% legend('carrot','tape','ball', 'Location','NorthEastOutside')
+xlabel('first moment')
+ylabel('second moment')
+zlabel('third moment')
+axis equal
+title('first three moments of shapes')
+legend('carrot','tape','ball', 'Location','NorthEastOutside')
 drawnow;
 hold on;
 
@@ -53,9 +66,9 @@ for i = 1:t
 
     areas;
     centroids;
+    CC.NumObjects;
     
-    
-    %% Calculate Hu moments of each blob
+    %% Calculate Hu moments of each conected component
     
     if CC.NumObjects == 1
         
@@ -66,11 +79,35 @@ for i = 1:t
         plot3(humoments1(i,1), humoments1(i,2), humoments1(i,3), 'k*')
         drawnow;
         hold on;
+        
+        centrematrix = [humoments1(i,:); centres]; % matrix containing hu moments of a new object and means for hu moments for known objects
+        
+        distances = pdist(centrematrix);
+        distances(4:end) = []
+        
+        [C,I] = min(distances);
+        
+        if I == 1
+            fprintf('this is a ball')
+        elseif I == 2
+            fprintf('this is a carrot')
+        elseif I == 3
+            fprintf('this is tape')
+        end
+        
+            
+                
+            
+                
+
+        
+        
     end 
     
     
 end
-carrotmoments2 = humoments1;
+
+% carrotmoments2 = humoments1;
 
 
 
