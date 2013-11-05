@@ -16,6 +16,10 @@
 %September - October 2013
 
 
+
+
+close all;
+pause on;
 %% set up video aquisition
 fprintf('initializing video...\n')
 if ~exist('vid', 'var')  %check if the videoinput has been created
@@ -33,15 +37,26 @@ fprintf('Initializing done.\n')
 
 bwthreshold = 0.95;
 area = 300; % minimal area of an object in px
-t = 150; % length of the experiment
+t = 700; % length of the experiment
 looptime = zeros(t, 1);
 path = zeros(t, 2);
 path2 = zeros(t, 2);
 
 %moment invariants (Hu moments) for each shape we will detect. Calculated in a separate script
-avg_carrots = [0.2074    0.0105    0.0035    0.0005    0.0000    0.0000   -0.0000];
-avg_circle = [0.4106    0.0002    0.0000    0.0001   -0.0000    0.0000    0.0000];
-shapes_moments = [avg_carrots; avg_circle]; %contains moments for each shape
+% avg_carrots = [0.2074    0.0105    0.0035    0.0005    0.0000    0.0000   -0.0000];
+% avg_circle = [0.4106    0.0002    0.0000    0.0001   -0.0000    0.0000    0.0000];
+
+load('ballmoments.mat')
+load('carrotmoments.mat')
+load('tapemoments.mat')
+
+% centreball = mean(ballmoments);
+centrecarrot = mean(carrotmoments);
+centretape = mean(tapemoments);
+
+
+
+shapes_moments = [centrecarrot; centretape]; %contains moments for each shape
 
 % bg = getsnapshot(vid);
 % subplot(2,2,1)
@@ -91,31 +106,43 @@ for i = 1:t
     
     %% Calculate Hu moments of each blob
     
+    
+    if i == 200 || i == 400 || i == 600
+        pause
+    end
     for k = 1:CC.NumObjects
         
         img = zeros(CC.ImageSize); %create an empty matrix
         img(CC.PixelIdxList{1,k}) = 1; % fill it with one blob
         humoment1 = humoments(img); % calculate moments of the image
         current_moments = [humoment1; shapes_moments];
-        distance = pdist(current_moments, 'correlation'); %distance between shapes vectors and current vector 
-        if distance(1, 1) < (2.4022e-05) * 2
-            fprintf('I see a carrot! \n')
+        distance = pdist(current_moments, 'euclidean'); %distance between shapes vectors and current vector 
+        
+        distance(size(shapes_moments,1) + 1:end) = [];
+        
+        [C,I] = min(distance);
+        
+        if C > 0.04
+            fprintf('cannot recognize the shape')
+        else
+            if I == 1
+                fprintf('carrot\n')
+            elseif I == 2
+                fprintf('circle\n')
+            elseif I == 3
+                fprintf('tape\n')
+            end
         end
         
-        if distance(1, 2) < (4.6460e-05) * 2
-            fprintf('I see tape!\n ')
-%         else
-%             fprintf('i dont see any carrots or tape!')
-        end   
         
 
-        carrotdist(i) = distance(1, 1);
-        tapedist(i) = distance(1, 2);
+        carrotdist(i) = distance(1);
+        tapedist(i) = distance(2);
 
         
     end        
  
-
+    i
     
 %     if CC.NumObjects == 1 %if we have one object
 %         img = zeros(CC.ImageSize); %create an empty matrix
@@ -179,18 +206,37 @@ end
 
 
 %% visualization
-figure
+
+
+figure(2)
 plot(looptime)
 title('looptime')
 hold on
 averagetime = mean(looptime);
 
-figure 
+index = [];
+for k = 1:size(path)
+    if find(path(i,2) == 0) == find(path(i,1) == 0)
+        index = [index; i];
+    end
+end
+path(index) = [];
+
+index = [];
+for k = 1:size(path2)
+    if find(path2(i,2) == 0) == find(path2(i,1) == 0)
+        index = [index; i];
+    end
+end
+path2(index) = [];
+
+figure(3)
+subplot(2,1,1)
 plot(path(:,1), -path(:,2))
 title('path1')
 axis([0 640 -480 0])
 
-figure 
+subplot(2,1,2)
 plot(path2(:,1), -path2(:,2))
 title('path2')
 axis([0 640 -480 0])
@@ -198,13 +244,14 @@ axis([0 640 -480 0])
 
 %here we try to plot distances. Try 1/distance. Need to recalculate
 %predefined objects' moments
-figure
-plot( 1:i, (2.4022e-05) * 2, 'r-')
+figure(4)
+% plot( 1:i, (2.4022e-05) * 2, 'r-')
 plot(carrotdist, 'r')
 hold on
 plot(tapedist, 'b')
-plot( 1:i, (4.6460e-05) * 2, 'm-')
-
+% plot( 1:i, (4.6460e-05) * 2, 'm-')
+title('some distances')
+plot(1:t(end), 0.06, 'k')
 
 
 
