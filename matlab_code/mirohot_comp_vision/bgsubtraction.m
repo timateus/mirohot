@@ -17,7 +17,9 @@
 
 
 
-addpath('C:\Users\tnosov\Dropbox\CO-OP2013\not shared\Code\matlab_code\mirohot_comp_vision\helper_functions');
+% add all folders to the search path
+addpath(genpath('C:\Users\tnosov\Dropbox\CO-OP2013\not shared\Code\matlab_code\mirohot_comp_vision')) 
+
 close all; % close all open windows
 pause on; % enable to pause the program
 %% set up video aquisition
