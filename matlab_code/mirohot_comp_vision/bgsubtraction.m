@@ -20,6 +20,7 @@
 % add all folders to the search path
 addpath(genpath('C:\Users\tnosov\Dropbox\CO-OP2013\not shared\Code\matlab_code\mirohot_comp_vision')) 
 
+
 close all; % close all open windows
 pause on; % enable to pause the program
 %% set up video aquisition
@@ -38,8 +39,12 @@ fprintf('Initializing done.\n')
 %% Variable declaration and Constants
 
 bwthreshold = 0.95;
-area = 300; % minimal area of an object in px
-t = 400; % length of the experiment
+minarea = 300; % minimal area of an object in px
+maxarea = 3000;
+t = 500; % length of the experiment
+MOMENTTH = 0.1; % threshold distance between moments of object and mean of moments of shapes
+
+
 looptime = zeros(t, 1);
 path = zeros(t, 2);
 path2 = zeros(t, 2);
@@ -59,34 +64,56 @@ shapes_moments = [centrecarrot; centretape]; %contains moments for each shape
 %% Body of the program
 for i = 1:t    
     
-    if i == 200 || i == 400 || i == 600
-        pause
-    end
+%     if i == 200 || i == 400 || i == 600
+%         pause
+%     end
     tic
     
     %% Basic Image Processing   
     % Acquire image, do basic pre-processing
     [CC, STATS] = getCC(vid, bwthreshold);
-    % Rearrange data, find connected components with area more than "area"
-    [CC, STATS, areas, centroids] = processCC(CC, STATS, area);    
+    % Rearrange data, find connected components with area in the range
+    % [minarea;maxarea]
+    [CC, STATS, areas, centroids] = processCC(CC, STATS, minarea, maxarea);  
     
-%     if CC.NumObjects == 0
-%         fprintf('no objects detected\n')
-%     end
+    %% Perspective correction, transformation to an origin at a corner and mm as usints
+    if mod(i,10) == 0 || i == 1 % do it every on the first loop iteration and then every 10th time
+            [topleftcorner, tform2, cornercentroids] = perspectivecorrection(vid, 30, 200, bwthreshold);
+    end
+    for m = 1:size(centroids,1)
+        newcentroids(m,:) = centroids(m,:) - topleftcorner;
+    end
     
-    for k = 1:CC.NumObjects
-        
+    newcentroids = tformfwd(tform2, newcentroids);
+    newcentroids = round(newcentroids);
+    
+    figure(1)
+    subplot(3,1,3)
+    plot(newcentroids(:,1), newcentroids(:,2), 'ok')
+    title('actual location');
+    axis equal
+    axis ([0 1180 0 580])
+    set(gca,'YDir','Reverse')
+    
+    
+    
+    carrots = [];
+    tapes = [];
+    %% object classification
+    for k = 1:CC.NumObjects        
         % this function calculates distances from mean moments of the
         % objects to moments of current object
         [distance, C, I] = distances(CC.PixelIdxList{1,k}, CC.ImageSize, shapes_moments);  
       
-        if C > 0.04 % if the smallest distance is bigger than a threshold, then most probably it's not one of the objects
+        if C > MOMENTTH % if the smallest distance is bigger than a threshold, then most probably it's not one of the objects
             fprintf('cannot recognize the shape\n')
         else
             if I == 1
                 fprintf('carrot\n')
+                carrots = [carrots; k];
             elseif I == 2
                 fprintf('tape\n')
+                tapes = [tapes; k];
             end
         end
         carrotdist(i) = distance(1);
@@ -94,12 +121,14 @@ for i = 1:t
     end        
  
     i;
+    
+    
    
     %% calculating and real time ploting of the path
     if size(centroids,1)>0
         path(i,:) = centroids(1,:);
         figure(1)
-        subplot(2,1,1)
+        subplot(3,1,1)
         plot(path(i,1), -path(i,2), 'or')
         title('path1')
         axis([0 640 -480 0])
@@ -107,13 +136,13 @@ for i = 1:t
 
     if size(centroids,1)>1
         path2(i,:) = centroids(2,:);
-        subplot(2,1,2)
+        subplot(3,1,2)
         plot(path2(i,1), -path2(i,2), 'or')
         title('path2')
         axis([0 640 -480 0])
     end   
 
-    %% 
+    %% time calculation
     looptime(i, 1) = toc; %time for each loop itteration
     looptime(i, 1);
 end
@@ -158,12 +187,12 @@ axis([0 640 -480 0])
 %Distances from mean moments of the objects to current object 
 %predefined objects' moments
 figure(4)
-% plot( 1:i, (2.4022e-05) * 2, 'r-')
+
 plot(carrotdist, 'r')
 hold on
 plot(tapedist, 'b')
-% plot( 1:i, (4.6460e-05) * 2, 'm-')
+
 title('some distances')
-plot(1:t(end), 0.06, 'k')
+plot(1:t(end), MOMENTTH, 'k')
 
 
