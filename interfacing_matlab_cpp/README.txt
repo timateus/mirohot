@@ -4,3 +4,5 @@ ftd2xx.h header for ftd2xx
 ftdi.cpp 
 ftdi.h 
 the main program
+
+refer to the wiki: https://github.com/timateus/mirohot/wiki/interfacing-c---with-matlab
